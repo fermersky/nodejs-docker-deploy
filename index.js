@@ -15,4 +15,8 @@ app.get('/', (req, res) => {
     stream.pipe(res);
 });
 
+app.get('/test', (req, res) => {
+    res.end('this just a test resource')
+})
+
 app.listen(PORT, () => console.log(`Express server has been successfully built and started on port ${PORT}`));
