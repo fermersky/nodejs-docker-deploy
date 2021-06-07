@@ -6,6 +6,10 @@ const path = require('path');
 const app = express();
 
 app.use(helmet());
+app.use((req, res, next) => {
+    res.removeHeader('Strict-Transport-Security');
+    next();
+})
 app.use('/static', express.static('static'))
 
 app.get('/', (req, res) => {
