@@ -14,7 +14,7 @@ app.use('/static', express.static('static'))
 
 app.get('/', (req, res) => {
     res.writeHead(200, {'Content-Type': 'text/html'})
-    
+
     const stream = fs.createReadStream(path.join(__dirname, 'static', 'index.html'));
     stream.pipe(res);
 });
