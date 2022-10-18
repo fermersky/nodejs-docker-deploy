@@ -1,13 +1,13 @@
-FROM node:14
+FROM node:18.7.0
 
 WORKDIR /usr/src/app
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm ci --production
 
 COPY . .
 
 EXPOSE 4444
 
-CMD ["npm", "start"]
+CMD ["node", "index.js"]

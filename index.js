@@ -1,26 +1,66 @@
-const express = require('express');
-const helmet = require('helmet');
+require("dotenv/config");
+
+const fs = require("fs");
+const path = require("path");
+const http = require("http");
+
 const PORT = process.env.PORT || 4444;
-const fs = require('fs');
-const path = require('path');
-const app = express();
+const STATIC_PATH = path.join(__dirname, "static");
 
-app.use(helmet());
-app.use((req, res, next) => {
-    res.removeHeader('Strict-Transport-Security');
-    next();
-})
-app.use('/static', express.static('static'))
+const MIME_TYPES = {
+    default: "application/octet-stream",
+    html: "text/html; charset=UTF-8",
+    js: "application/javascript; charset=UTF-8",
+    css: "text/css",
+    png: "image/png",
+    jpg: "image/jpg",
+    gif: "image/gif",
+    ico: "image/x-icon",
+    svg: "image/svg+xml",
+};
 
-app.get('/', (req, res) => {
-    res.writeHead(200, {'Content-Type': 'text/html'})
+const toBool = [() => true, () => false];
 
-    const stream = fs.createReadStream(path.join(__dirname, 'static', 'index.html'));
-    stream.pipe(res);
+const escape = (filePath) => filePath.replace("..", "").replace("~", "");
+
+const server = http.createServer(async (req, res) => {
+    try {
+        const { url, method } = req;
+        const url_path = `/${url.split("/").splice(2).join("/")}`;
+        const paths = [STATIC_PATH, url_path];
+
+        if (method !== "GET") {
+            res.statusCode = 404;
+            res.end("not found");
+
+            return;
+        }
+
+        if (url === "/") {
+            paths.push("/index.html");
+        }
+
+        const file_path = escape(paths.join(""));
+        const ext = path.extname(file_path).substring(1).toLowerCase();
+        const exists = await fs.promises.access(file_path).then(...toBool);
+
+        if (exists && ext) {
+            res.writeHead(200, { "Content-Type": MIME_TYPES[ext] || "text/plain" });
+
+            const stream = fs.createReadStream(file_path);
+            stream.pipe(res);
+
+            return;
+        }
+
+        res.statusCode = 404;
+        res.end("not found");
+    } catch (er) {
+        console.log(er);
+
+        res.statusCode = 500;
+        res.end("oops");
+    }
 });
 
-app.get('/test', (req, res) => {
-    res.end('this just a test resource')
-})
-
-app.listen(PORT, () => console.log(`Express server has been successfully built and started on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server has been successfully built and started on port ${PORT}`));
